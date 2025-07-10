@@ -52,6 +52,7 @@
       align-items: center;
       justify-content: center;
       flex-direction: column;
+      cursor: pointer;
       z-index: 2;
     }
 
@@ -59,6 +60,7 @@
       width: 120%;
       height: auto;
       opacity: 0.4;
+      pointer-events: none;
     }
 
     .center-text {
@@ -77,11 +79,23 @@
     .segment {
       stroke-width: 1;
       cursor: pointer;
-      transition: fill 0.3s;
+      transition: fill 0.3s, transform 0.3s;
     }
 
     .segment:hover {
       fill: #0e9892;
+      transform: scale(1.03);
+    }
+
+    .sub-flap {
+      opacity: 0;
+      transform: scale(0.8);
+      transition: opacity 0.3s, transform 0.3s;
+    }
+
+    .sub-flap.visible {
+      opacity: 1;
+      transform: scale(1);
     }
 
     svg text {
@@ -206,7 +220,9 @@
       flap.setAttribute("fill", flapFillColor);
       flap.setAttribute("opacity", "0.9");
       flap.setAttribute("filter", "url(#shadow)");
+      flap.setAttribute("class", "sub-flap");
       flapsGroup.appendChild(flap);
+      requestAnimationFrame(() => flap.classList.add('visible'));
 
       const midAngle = start + flapAngle / 2;
       const textRadius = (inner + outer) / 2;
@@ -220,6 +236,7 @@
       text.setAttribute("font-weight", "bold");
       text.setAttribute("text-anchor", "middle");
       text.setAttribute("dominant-baseline", "middle");
+      text.setAttribute("class", "sub-flap");
 
       let rotation = midAngle - 90;
       if (rotation > 90 || rotation < -90) {
@@ -229,6 +246,7 @@
       text.setAttribute("transform", `rotate(${rotation}, ${textPos.x}, ${textPos.y})`);
       text.textContent = flapLabels[j % flapLabels.length];
       flapsGroup.appendChild(text);
+      requestAnimationFrame(() => text.classList.add('visible'));
     }
   }
 
@@ -302,6 +320,12 @@
     labels.appendChild(text);
 
   }
+
+  const centerCircle = document.querySelector('.center-circle');
+  centerCircle.addEventListener('click', () => {
+    activeSegmentIndex = null;
+    flapsGroup.innerHTML = '';
+  });
 </script>
 </body>
 </html>
