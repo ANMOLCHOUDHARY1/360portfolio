@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Radial Wheel with Extended Flaps</title>
+  <style>
+    body {
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-family: sans-serif;
+      background-color: #0c1b2b;
+      position: relative;
+      overflow: visible;
+    }
+
+    body::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-image: url('icons/bg-2.jpg');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      opacity: 0.5;
+      z-index: -1;
+    }
+
+    .circle-menu {
+      position: relative;
+      width: 90vw;
+      max-width: 700px;
+      height: 90vw;
+      max-height: 700px;
+    }
+
+    .center-circle {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 22%;
+      height: 22%;
+      background: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      z-index: 2;
+    }
+
+    .center-circle img {
+      width: 120%;
+      height: auto;
+      opacity: 0.4;
+    }
+
+    .center-text {
+      position: absolute;
+      color: #0e6898;
+      font-size: 38px;
+      font-weight: bold;
+      text-align: center;
+      pointer-events: none;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 3;
+    }
+
+    .segment {
+      stroke-width: 1;
+      cursor: pointer;
+      transition: fill 0.3s;
+    }
+
+    .segment:hover {
+      fill: #0e9892;
+    }
+
+    svg text {
+      font-weight: 600;
+    }
+
+    @media (max-width: 600px) {
+      svg text {
+        font-size: 10px;
+      }
+      .center-circle {
+        min-width: 90px;
+        min-height: 90px;
+      }
+    }
+  </style>
+</head>
+<body>
+<div class="circle-menu">
+  <svg viewBox="-150 -150 1000 1000" xmlns="http://www.w3.org/2000/svg"
+       width="100%" height="100%" preserveAspectRatio="xMidYMid meet">
+    <defs>
+      <filter id="shadow">
+        <feDropShadow dx="2" dy="2" stdDeviation="2" flood-color="#000" flood-opacity="0.3" />
+      </filter>
+    </defs>
+
+    <!-- White center circle -->
+    <circle cx="350" cy="350" r="150" fill="white" />
+
+    <g id="segments"></g>
+    <g id="sub-flaps"></g>
+    <g id="labels"></g>
+  </svg>
+
+  <!-- Center logo image and text inside white circle -->
+  <div class="center-circle">
+    <img src="icons/aaxis icon.png" alt="logo" />
+    <div class="center-text">360° Portfolio</div>
+  </div>
+</div>
+
+<script>
+  const cx = 350, cy = 350;
+  const rOuter = 340, rInner = 200;
+  const total = 15;
+  const sliceGap = 1.1;
+  const sliceAngle = (360 - total * sliceGap) / total;
+
+  const segments = document.getElementById("segments");
+  const labels = document.getElementById("labels");
+  const flapsGroup = document.getElementById("sub-flaps");
+
+  let activeSegmentIndex = null;
+
+  const items = [
+    { name: "Automation", icon: "icons/automation.svg" },
+    { name: "Water\nLabs", icon: "icons/water-labs.svg" },
+    { name: "Weather\nMonitoring", icon: "icons/weather.svg" },
+    { name: "RTDAS", icon: "icons/rtdas.svg" },
+    { name: "Emission\nMonitoring", icon: "icons/emission.svg" },
+    { name: "IoT &\nTelemetry", icon: "icons/iot.svg" },
+    { name: "Gas\nMonitoring", icon: "icons/gas.svg" },
+    { name: "Snow and\nAvalanche", icon: "icons/snow.svg" },
+    { name: "Water Quality\nMonitoring", icon: "icons/water-quality.svg" },
+    { name: "Data Analytics\n& Reporting", icon: "icons/data.svg" },
+    { name: "Odour\nControl", icon: "icons/odour.svg" },
+    { name: "River\nDischarge", icon: "icons/river.svg" },
+    { name: "RTWQMS", icon: "icons/rtwqms.svg" },
+    { name: "Ground\nWater", icon: "icons/groundwater.svg" },
+    { name: "Microbiology", icon: "icons/microbiology.svg" }
+  ];
+
+  function polarToCartesian(cx, cy, r, angle) {
+    const rad = (angle - 90) * Math.PI / 180;
+    return {
+      x: cx + r * Math.cos(rad),
+      y: cy + r * Math.sin(rad)
+    };
+  }
+
+  function showFlaps(segmentIndex) {
+    flapsGroup.innerHTML = '';
+
+    const subFlapCount = 4;
+    const segmentAngle = sliceAngle + sliceGap;
+    const flapGap = 1.2;
+    const totalGap = flapGap * subFlapCount;
+    const flapAngle = (segmentAngle - totalGap) / subFlapCount;
+    const baseStart = segmentIndex * segmentAngle + sliceGap / 2;
+
+    // Dynamic color matching segment
+    const lightness = 50 - segmentIndex * 2.5;
+    const flapFillColor = `hsl(195, 90%, ${lightness}%)`;
+    const flapStrokeColor = `hsl(195, 90%, ${lightness - 10}%)`;
+
+    const flapLabels = ["Thermofisher", "Badger Meter", "Coliminder", "OTT HydroMet"];
+
+    for (let j = 0; j < subFlapCount; j++) {
+      const start = baseStart + j * (flapAngle + flapGap);
+      const end = start + flapAngle;
+
+      const inner = rOuter + 5;
+      const outer = rOuter + 160;
+
+      const p1 = polarToCartesian(cx, cy, outer, start);
+      const p2 = polarToCartesian(cx, cy, outer, end);
+      const p3 = polarToCartesian(cx, cy, inner, end);
+      const p4 = polarToCartesian(cx, cy, inner, start);
+      const largeArc = flapAngle > 180 ? 1 : 0;
+
+      const d = [
+        `M ${p1.x} ${p1.y}`,
+        `A ${outer} ${outer} 0 ${largeArc} 1 ${p2.x} ${p2.y}`,
+        `L ${p3.x} ${p3.y}`,
+        `A ${inner} ${inner} 0 ${largeArc} 0 ${p4.x} ${p4.y}`,
+        "Z"
+      ].join(" ");
+
+      const flap = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      flap.setAttribute("d", d);
+      flap.setAttribute("fill", flapFillColor);
+      flap.setAttribute("opacity", "0.9");
+      flap.setAttribute("filter", "url(#shadow)");
+      flapsGroup.appendChild(flap);
+
+      const midAngle = start + flapAngle / 2;
+      const textRadius = (inner + outer) / 2;
+      const textPos = polarToCartesian(cx, cy, textRadius, midAngle);
+
+      const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+      text.setAttribute("x", textPos.x);
+      text.setAttribute("y", textPos.y);
+      text.setAttribute("fill", "#ffffff");
+      text.setAttribute("font-size", "14");
+      text.setAttribute("font-weight", "bold");
+      text.setAttribute("text-anchor", "middle");
+      text.setAttribute("dominant-baseline", "middle");
+
+      let rotation = midAngle - 90;
+      if (rotation > 90 || rotation < -90) {
+        rotation += 180;
+      }
+
+      text.setAttribute("transform", `rotate(${rotation}, ${textPos.x}, ${textPos.y})`);
+      text.textContent = flapLabels[j % flapLabels.length];
+      flapsGroup.appendChild(text);
+    }
+  }
+
+  for (let i = 0; i < total; i++) {
+    const startAngle = i * (sliceAngle + sliceGap);
+    const adjustedStart = startAngle + sliceGap / 2;
+    const adjustedEnd = adjustedStart + sliceAngle;
+
+    const p1 = polarToCartesian(cx, cy, rOuter, adjustedStart);
+    const p2 = polarToCartesian(cx, cy, rOuter, adjustedEnd);
+    const p3 = polarToCartesian(cx, cy, rInner, adjustedEnd);
+    const p4 = polarToCartesian(cx, cy, rInner, adjustedStart);
+    const largeArc = sliceAngle > 180 ? 1 : 0;
+
+    const d = [
+      `M ${p1.x} ${p1.y}`,
+      `A ${rOuter} ${rOuter} 0 ${largeArc} 1 ${p2.x} ${p2.y}`,
+      `L ${p3.x} ${p3.y}`,
+      `A ${rInner} ${rInner} 0 ${largeArc} 0 ${p4.x} ${p4.y}`,
+      "Z"
+    ].join(" ");
+
+    const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    const lightness = 50 - i * 2.5;
+    path.setAttribute("d", d);
+    path.setAttribute("fill", `hsl(195, 90%, ${lightness}%)`);
+    path.setAttribute("filter", "url(#shadow)");
+    path.setAttribute("class", "segment");
+    path.setAttribute("cursor", "pointer");
+
+    path.addEventListener("click", () => {
+      if (activeSegmentIndex === i) {
+        activeSegmentIndex = null;
+        flapsGroup.innerHTML = '';
+      } else {
+        activeSegmentIndex = i;
+        showFlaps(i);
+      }
+    });
+
+    segments.appendChild(path);
+
+    const midAngle = adjustedStart + (adjustedEnd - adjustedStart) / 2;
+    const labelPos = polarToCartesian(cx, cy, (rOuter + rInner) / 2 + 10, midAngle);
+
+    const image = document.createElementNS("http://www.w3.org/2000/svg", "image");
+    image.setAttribute("href", items[i].icon);
+    image.setAttribute("x", labelPos.x - 20);
+    image.setAttribute("y", labelPos.y - 40);
+    image.setAttribute("width", "38");
+    image.setAttribute("height", "38");
+    labels.appendChild(image);
+
+    const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    text.setAttribute("x", labelPos.x);
+    text.setAttribute("y", labelPos.y + 15);
+    text.setAttribute("text-anchor", "middle");
+    text.setAttribute("font-size", "14");
+    text.setAttribute("font-weight", "bold");
+    text.setAttribute("fill", "#fff");
+
+    const lines = items[i].name.split("\n");
+    lines.forEach((line, index) => {
+      const tspan = document.createElementNS("http://www.w3.org/2000/svg", "tspan");
+      tspan.setAttribute("x", labelPos.x);
+      tspan.setAttribute("dy", index === 0 ? "0" : "1.2em");
+      tspan.textContent = line;
+      text.appendChild(tspan);
+    });
+
+    labels.appendChild(text);
+
+  }
+</script>
+</body>
+</html>
